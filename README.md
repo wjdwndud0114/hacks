@@ -1,3 +1,12 @@
+# how 2 run
+run `node_modules/.bin/testrpc`
+keep it running. port 8545. then run ./app/index.html.
+
+
+
+
+
+
 # truffle-init-webpack
 Example webpack project with Truffle. Includes contracts, migrations, tests, user interface and webpack build pipeline.
 
