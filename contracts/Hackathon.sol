@@ -29,13 +29,13 @@ contract Hackathon {
   function Hackathon(uint totalPts) {
     admin = msg.sender;
     totalHackPts = totalPts;
-    totalGivenHackPts = numOfTeams = numOfGivers = 0;
+    totalGivenHackPts = 0;
     isStarted = isEnded = false;
   }
 
   function startEvent() {
     require(msg.sender == admin && !isStarted);
-    totalHackPts = numOfGivers * 100;
+    totalHackPts = givers.length * 100;
     isStarted = true;
   }
 
