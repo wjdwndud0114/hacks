@@ -1,23 +1,69 @@
-web3 = new Web3(new Web3.providers.HttpProvider("http://localhost:8545"));
-abi = JSON.parse('[{"constant":false,"inputs":[{"name":"team","type":"bytes32"}],"name":"getNumPoints","outputs":[{"name":"","type":"uint8"}],"payable":false,"type":"function"},{"constant":false,"inputs":[{"name":"candidate","type":"bytes32"}],"name":"validTeam","outputs":[{"name":"","type":"bool"}],"payable":false,"type":"function"},{"constant":true,"inputs":[{"name":"","type":"bytes32"}],"name":"points","outputs":[{"name":"","type":"uint8"}],"payable":false,"type":"function"},{"constant":true,"inputs":[{"name":"x","type":"bytes32"}],"name":"bytes32ToString","outputs":[{"name":"","type":"string"}],"payable":false,"type":"function"},{"constant":true,"inputs":[{"name":"","type":"uint256"}],"name":"teamList","outputs":[{"name":"","type":"bytes32"}],"payable":false,"type":"function"},{"constant":false,"inputs":[{"name":"team","type":"bytes32"}],"name":"givePoint","outputs":[],"payable":false,"type":"function"},{"constant":true,"inputs":[],"name":"contractOwner","outputs":[{"name":"","type":"address"}],"payable":false,"type":"function"},{"inputs":[{"name":"teamNames","type":"bytes32[]"}],"payable":false,"type":"constructor"}]')
-VotingContract = web3.eth.contract(abi);
-// In your nodejs console, execute contractInstance.address to get the address at which the contract is deployed and change the line below to use your deployed address
-contractInstance = VotingContract.at('0xfc0cbd33405d169e0ce93a3087f9ce369c05e7b7');
-teams = {"team a": "team-1", "team b": "team-2", "team c": "team-3"}
+// Import the page's CSS. Webpack will know what to do with it.
+import "../stylesheets/app.css";
 
-function voteForTeam() {
-  teamName= $("#team").val();
-  contractInstance.givePoint(teamName, {from: web3.eth.accounts[0]}, function() {
-    let div_id = teams[teamName];
-    $("#" + div_id).html(contractInstance.getNumPoints.call(teamName).toString());
-  });
+// Import libraries we need.
+import { default as Web3} from 'web3';
+import { default as contract } from 'truffle-contract'
+
+/*
+ * When you compile and deploy your Voting contract,
+ * truffle stores the abi and deployed address in a json
+ * file in the build directory. We will use this information
+ * to setup a Voting abstraction. We will use this abstraction
+ * later to create an instance of the Voting contract.
+ * Compare this against the index.js from our previous tutorial to see the difference
+ * https://gist.github.com/maheshmurthy/f6e96d6b3fff4cd4fa7f892de8a1a1b4#file-index-js
+ */
+
+import voting_artifacts from '../../build/contracts/Voting.json'
+
+var Voting = contract(voting_artifacts);
+
+let candidates = {"Rama": "candidate-1", "Nick": "candidate-2", "Jose": "candidate-3"}
+
+window.voteForCandidate = function(candidate) {
+  let candidateName = $("#candidate").val();
+  try {
+    $("#msg").html("Vote has been submitted. The vote count will increment as soon as the vote is recorded on the blockchain. Please wait.")
+    $("#candidate").val("");
+
+    /* Voting.deployed() returns an instance of the contract. Every call
+     * in Truffle returns a promise which is why we have used then()
+     * everywhere we have a transaction call
+     */
+    Voting.deployed().then(function(contractInstance) {
+      contractInstance.voteForCandidate(candidateName, {gas: 140000, from: web3.eth.accounts[0]}).then(function() {
+        let div_id = candidates[candidateName];
+        return contractInstance.totalVotesFor.call(candidateName).then(function(v) {
+          $("#" + div_id).html(v.toString());
+          $("#msg").html("");
+        });
+      });
+    });
+  } catch (err) {
+    console.log(err);
+  }
 }
 
-$(document).ready(function() {
-  teamNames = Object.keys(teams);
-  for (var i = 0; i < teamNames.length; i++) {
-    let name = teamNames[i];
-    let val = contractInstance.getNumPoints.call(name).toString()
-    $("#" + teams[name]).html(val);
+$( document ).ready(function() {
+  if (typeof web3 !== 'undefined') {
+    console.warn("Using web3 detected from external source like Metamask")
+    // Use Mist/MetaMask's provider
+    window.web3 = new Web3(web3.currentProvider);
+  } else {
+    console.warn("No web3 detected. Falling back to http://localhost:8545. You should remove this fallback when you deploy live, as it's inherently insecure. Consider switching to Metamask for development. More info here: http://truffleframework.com/tutorials/truffle-and-metamask");
+    // fallback - use your fallback strategy (local node / hosted node + in-dapp id mgmt / fail)
+    window.web3 = new Web3(new Web3.providers.HttpProvider("http://localhost:8545"));
+  }
+
+  Voting.setProvider(web3.currentProvider);
+  let candidateNames = Object.keys(candidates);
+  for (var i = 0; i < candidateNames.length; i++) {
+    let name = candidateNames[i];
+    Voting.deployed().then(function(contractInstance) {
+      contractInstance.totalVotesFor.call(name).then(function(v) {
+        $("#" + candidates[name]).html(v.toString());
+      });
+    })
   }
 });
