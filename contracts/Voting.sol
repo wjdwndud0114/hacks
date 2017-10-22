@@ -7,38 +7,38 @@ contract Voting {
   an unsigned integer to store the vote count
   */
   
-  mapping (bytes32 => uint8) public votesReceived;
+  mapping (bytes32 => uint8) public points;
   
   /* Solidity doesn't let you pass in an array of strings in the constructor (yet).
   We will use an array of bytes32 instead to store the list of candidates
   */
   
-  bytes32[] public candidateList;
+  bytes32[] public teamList;
 
   /* This is the constructor which will be called once when you
   deploy the contract to the blockchain. When we deploy the contract,
   we will pass an array of candidates who will be contesting in the election
   */
-  function Voting(bytes32[] candidateNames) {
-    candidateList = candidateNames;
+  function Voting(bytes32[] teamNames) {
+    teamList = teamNames;
   }
 
   // This function returns the total votes a candidate has received so far
-  function totalVotesFor(bytes32 candidate) returns (uint8) {
-    if (validCandidate(candidate) == false) throw;
-    return votesReceived[candidate];
+  function getNumPoints(bytes32 team) returns (uint8) {
+    if (validTeam(team) == false) throw;
+    return points[team];
   }
 
   // This function increments the vote count for the specified candidate. This
   // is equivalent to casting a vote
-  function voteForCandidate(bytes32 candidate) {
-    if (validCandidate(candidate) == false) throw;
-    votesReceived[candidate] += 1;
+  function givePoint(bytes32 team) {
+    if (validTeam(team) == false) throw;
+    points[team] += 1;
   }
 
-  function validCandidate(bytes32 candidate) returns (bool) {
-    for(uint i = 0; i < candidateList.length; i++) {
-      if (candidateList[i] == candidate) {
+  function validTeam(bytes32 team) returns (bool) {
+    for(uint i = 0; i < teamList.length; i++) {
+      if (teamList[i] == team) {
         return true;
       }
     }
