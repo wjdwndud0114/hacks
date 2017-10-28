@@ -6,7 +6,7 @@ import { default as Web3} from 'web3';
 import { default as contract } from 'truffle-contract'
 
 // Import our contract artifacts and turn them into usable abstractions.
-import hackathon_artifacts from '../../build/contracts/Hackthon.json'
+import hackathon_artifacts from '../../build/contracts/Hackathon.json'
 
 // MetaCoin is our usable abstraction, which we'll use through the code below.
 var Hackathon = contract(hackathon_artifacts);
@@ -17,23 +17,35 @@ $(document).ready(function() {
     window.web3 = new Web3(web3.currentProvider);
   } else {
     console.warn("No web3 detected. Falling back to https://localhost:8545");
-    window.web3 = new Web3(new Web3.providers.HttpProvider("http://localhost:8545");
+    window.web3 = new Web3(new Web3.providers.HttpProvider("http://localhost:8545"));
   }
 
   Hackathon.setProvider(web3.currentProvider);
-  
-  Hackathon.deployed().then(function(contractInstance) {
-    var infoG = contractInstance.infoGivers;
-    var arrG = contractInstance.givers;
-    var infoT = contractInstance.infoTeams;
-    var arrT = contractInstance.teams;
-    for(var i = 0; i < arrG.length; i++) {
-      $('#judgeList').append('<li>' + infoG[arrG[i]].giverAddr + '\n' + infoG[arrG[i]].giverName + '</li>');
-    }
-    for(var i = 0; i < arrT.length; i++) {
-      $('#teamList').append('<li>' + infoT[arrT[i]] + '\n' + infoT[arrT[i]]+ '</li>');
-    }
+  var hInst;
+  Hackathon.deployed().then(function(c) {
+    hInst = c;
+
+    hInst.getGivers.call().then(function(givers){
+      for(var i = 0; i < givers.length; i++) {
+        var addr = givers[i];
+        hInst.getInfoGiverName.call(givers[i]).then(function(giverName){
+          $('#judgeList').append('<dt>'+web3.toAscii(giverName)+'</dt><dd>'+addr+'</dd>');
+
+        });
+      }
+    });
+
+   
+    hInst.getTeams.call().then(function(teams){
+      for(var j = 0; j < teams.length; j++) {
+        var addr = teams[j];
+        hInst.getInfoTeamName.call(teams[j]).then(function(teamName){
+          $('#teamList').append('<dt>'+web3.toAscii(teamName)+'</dt><dd>'+addr+'</dd>');
+        });
+      }
+    });
+
+  }).catch(function(err) {
+    console.log(err.message);
   });
-
-
 });

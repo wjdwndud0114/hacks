@@ -4,21 +4,21 @@ contract Hackathon {
   
   struct giver {
     address giverAddr;
-    bytes32[] giverName;
+    bytes32 giverName;
     uint hackPts;
     mapping(address => uint) usedHackPts;
   }
 
   struct team {
     address teamAddr;
-    bytes32[] teamName;
+    bytes32 teamName;
     uint receivedHackPts;
   }
 
   mapping(address => giver) public infoGiver;
   mapping(address => team) public infoTeam;
-  address[] teams;
-  address[] givers;
+  address[] public teams;
+  address[] public givers;
 
   address public admin;
   uint public totalHackPts;
@@ -33,6 +33,25 @@ contract Hackathon {
     isStarted = isEnded = false;
   }
 
+  function getTeams() returns(address[]) {
+    return teams;
+  }
+  function getGivers() returns(address[]) {
+    return givers;
+  }
+  function getInfoGiverName(address addr) returns(bytes32) {
+    return infoGiver[addr].giverName;
+  }
+  function getInfoGiverHackPts(address addr) returns(uint) {
+    return infoGiver[addr].hackPts;
+  }
+  function getInfoTeamName(address addr) returns(bytes32) {
+    return infoTeam[addr].teamName;
+  }
+  function getInfoTeamHackPts(address addr) returns(uint) {
+    return infoTeam[addr].receivedHackPts;
+  }
+
   function startEvent() {
     require(msg.sender == admin && !isStarted);
     totalHackPts = givers.length * 100;
@@ -44,13 +63,13 @@ contract Hackathon {
     isEnded = true;
   }
 
-  function addTeam(address addrTeam, bytes32[] nameTeam) {
+  function addTeam(address addrTeam, bytes32 nameTeam) {
     require(msg.sender == admin && !isStarted);
     infoTeam[addrTeam] = team(addrTeam, nameTeam, 0);
     teams.push(addrTeam);
   }
 
-  function addGiver(address addrGiver, bytes32[] nameGiver) {
+  function addGiver(address addrGiver, bytes32 nameGiver) {
     require(msg.sender == admin && !isStarted);
     infoGiver[addrGiver] = giver(addrGiver, nameGiver, 100);
     givers.push(addrGiver);
